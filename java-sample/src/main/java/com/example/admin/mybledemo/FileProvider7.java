@@ -6,7 +6,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v4.content.FileProvider;
+
+import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.util.List;
@@ -25,7 +26,6 @@ public class FileProvider7 {
         }
         return fileUri;
     }
-
 
 
     public static Uri getUriForFile24(Context context, File file) {

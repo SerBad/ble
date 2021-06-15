@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Android-BLE.iml" filepath="$PROJECT_DIR$/Android-BLE.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/Github.Android-BLE.core.iml" filepath="$PROJECT_DIR$/.idea/modules/core/Github.Android-BLE.core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/java-sample/Github.Android-BLE.java-sample.iml" filepath="$PROJECT_DIR$/.idea/modules/java-sample/Github.Android-BLE.java-sample.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Android-BLE.iml" filepath="$PROJECT_DIR$/.idea/modules/Android-BLE.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/aop-arms/Android-BLE.aop-arms.iml" filepath="$PROJECT_DIR$/.idea/modules/aop-arms/Android-BLE.aop-arms.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/Android-BLE.core.iml" filepath="$PROJECT_DIR$/.idea/modules/core/Android-BLE.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/java-sample/Android-BLE.java-sample.iml" filepath="$PROJECT_DIR$/.idea/modules/java-sample/Android-BLE.java-sample.iml" />
     </modules>
   </component>
 </project>

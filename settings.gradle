@@ -1,2 +1,3 @@
 include ':java-sample', ':core'
 //':kotlin-sample'
+include ':aop-arms'

@@ -28,7 +28,8 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
-import android.support.v4.os.HandlerCompat;
+
+import androidx.core.os.HandlerCompat;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -61,6 +62,7 @@ import cn.com.heaton.blelibrary.ota.OtaListener;
 
 /**
  * the main implementation class of all methods
+ *
  * @author aicareles
  * @since 2016/12/10
  */
@@ -70,20 +72,20 @@ public final class BleRequestImpl<T extends BleDevice> {
 
     private static BleRequestImpl instance;
     private final Handler handler = BleHandler.of();
-    private Options options;
-    private Context context;
-    private BluetoothAdapter bluetoothAdapter;
     private final Object locker = new Object();
     private final List<BluetoothGattCharacteristic> notifyCharacteristics = new ArrayList<>();//Notification attribute callback array
-    //private int notifyIndex = 0;//Notification feature callback list
-    private BluetoothGattCharacteristic otaWriteCharacteristic;//Ota ble send the object
-    private boolean otaUpdating = false;//Whether the OTA is updated
     private final Map<String, BluetoothGattCharacteristic> writeCharacteristicMap = new HashMap<>();
     private final Map<String, BluetoothGattCharacteristic> readCharacteristicMap = new HashMap<>();
     //Multiple device connections must put the gatt object in the collection
     private final Map<String, BluetoothGatt> gattHashMap = new HashMap<>();
     //The address of the connected device
     private final List<String> connectedAddressList = new ArrayList<>();
+    private Options options;
+    private Context context;
+    private BluetoothAdapter bluetoothAdapter;
+    //private int notifyIndex = 0;//Notification feature callback list
+    private BluetoothGattCharacteristic otaWriteCharacteristic;//Ota ble send the object
+    private boolean otaUpdating = false;//Whether the OTA is updated
     private ConnectWrapperCallback<T> connectWrapperCallback;
     private NotifyWrapperCallback<T> notifyWrapperCallback;
     private MtuWrapperCallback<T> mtuWrapperCallback;
@@ -92,14 +94,11 @@ public final class BleRequestImpl<T extends BleDevice> {
     private DescWrapperCallback<T> descWrapperCallback;
     private WriteWrapperCallback<T> writeWrapperCallback;
     private OtaListener otaListener;//Ota update operation listener
-
-    private BleRequestImpl(){}
-
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             BluetoothDevice device = gatt.getDevice();
-            if (device == null){
+            if (device == null) {
                 return;
             }
             String address = device.getAddress();
@@ -110,20 +109,20 @@ public final class BleRequestImpl<T extends BleDevice> {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     connectedAddressList.add(device.getAddress());
-                    if (connectWrapperCallback != null){
+                    if (connectWrapperCallback != null) {
                         bleDevice.setConnectionState(BleDevice.CONNECTED);
                         connectWrapperCallback.onConnectionChanged(bleDevice);
                     }
                     BleLog.d(TAG, "onConnectionStateChange:----device is connected.");
                     BluetoothGatt bluetoothGatt = getBluetoothGatt(device.getAddress());
-                    if (null != bluetoothGatt){
+                    if (null != bluetoothGatt) {
                         // Attempts to discover services after successful connection.
                         BleLog.d(TAG, "trying to start service discovery");
                         bluetoothGatt.discoverServices();
                     }
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     BleLog.d(TAG, "onConnectionStateChange:----device is disconnected.");
-                    if (connectWrapperCallback != null){
+                    if (connectWrapperCallback != null) {
                         bleDevice.setConnectionState(BleDevice.DISCONNECT);
                         connectWrapperCallback.onConnectionChanged(bleDevice);
                     }
@@ -133,7 +132,7 @@ public final class BleRequestImpl<T extends BleDevice> {
                 //Occurrence 133 or 257 19 Equal value is not 0: Connection establishment failed due to protocol stack
                 BleLog.e(TAG, "onConnectionStateChange----: " + "Connection status is abnormal:" + status);
                 close(device.getAddress());
-                if (connectWrapperCallback != null){
+                if (connectWrapperCallback != null) {
                     int errorCode = getErrorCode(bleDevice);
                     connectWrapperCallback.onConnectFailed(bleDevice, errorCode);
                 }
@@ -142,10 +141,10 @@ public final class BleRequestImpl<T extends BleDevice> {
         }
 
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status){
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
             if (gatt != null && gatt.getDevice() != null) {
                 BleLog.d(TAG, "onMtuChanged mtu=" + mtu + ",status=" + status);
-                if (null != mtuWrapperCallback){
+                if (null != mtuWrapperCallback) {
                     mtuWrapperCallback.onMtuChanged(getBleDeviceInternal(gatt.getDevice().getAddress()), mtu, status);
                 }
             }
@@ -166,15 +165,15 @@ public final class BleRequestImpl<T extends BleDevice> {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic, int status) {
-            if (gatt == null || gatt.getDevice() == null)return;
+            if (gatt == null || gatt.getDevice() == null) return;
             BleLog.d(TAG, "onCharacteristicRead:" + status);
             T bleDevice = getBleDeviceInternal(gatt.getDevice().getAddress());
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (null != readWrapperCallback){
+                if (null != readWrapperCallback) {
                     readWrapperCallback.onReadSuccess(bleDevice, characteristic);
                 }
-            }else {
-                if (null != readWrapperCallback){
+            } else {
+                if (null != readWrapperCallback) {
                     readWrapperCallback.onReadFailed(bleDevice, status);
                 }
             }
@@ -183,12 +182,12 @@ public final class BleRequestImpl<T extends BleDevice> {
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt,
                                           BluetoothGattCharacteristic characteristic, int status) {
-            if (gatt == null || gatt.getDevice() == null)return;
+            if (gatt == null || gatt.getDevice() == null) return;
             BleLog.d(TAG, gatt.getDevice().getAddress() + "-----write success----- status: " + status);
             synchronized (locker) {
                 T bleDevice = getBleDeviceInternal(gatt.getDevice().getAddress());
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    if (null != writeWrapperCallback){
+                    if (null != writeWrapperCallback) {
                         writeWrapperCallback.onWriteSuccess(bleDevice, characteristic);
                     }
                     if (options.uuid_ota_write_cha.equals(characteristic.getUuid())) {
@@ -196,8 +195,8 @@ public final class BleRequestImpl<T extends BleDevice> {
                             otaListener.onWrite();
                         }
                     }
-                }else {
-                    if (null != writeWrapperCallback){
+                } else {
+                    if (null != writeWrapperCallback) {
                         writeWrapperCallback.onWriteFailed(bleDevice, status);
                     }
                 }
@@ -214,7 +213,7 @@ public final class BleRequestImpl<T extends BleDevice> {
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             synchronized (locker) {
-                if (gatt == null || gatt.getDevice() == null)return;
+                if (gatt == null || gatt.getDevice() == null) return;
                 BleLog.d(TAG, gatt.getDevice().getAddress() + " -- onCharacteristicChanged: "
                         + (characteristic.getValue() != null ? ByteUtils.toHexString(characteristic.getValue()) : ""));
                 T bleDevice = getBleDeviceInternal(gatt.getDevice().getAddress());
@@ -232,13 +231,13 @@ public final class BleRequestImpl<T extends BleDevice> {
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt,
                                       BluetoothGattDescriptor descriptor, int status) {
-            if (gatt == null || gatt.getDevice() == null)return;
+            if (gatt == null || gatt.getDevice() == null) return;
             UUID uuid = descriptor.getCharacteristic().getUuid();
             BleLog.d(TAG, "write descriptor uuid:" + uuid);
             synchronized (locker) {
                 T bleDevice = getBleDeviceInternal(gatt.getDevice().getAddress());
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    if (null != descWrapperCallback){
+                    if (null != descWrapperCallback) {
                         descWrapperCallback.onDescWriteSuccess(bleDevice, descriptor);
                     }
                     /*if (notifyCharacteristics.size() > 0 && notifyIndex < notifyCharacteristics.size()) {
@@ -249,14 +248,14 @@ public final class BleRequestImpl<T extends BleDevice> {
                     BleLog.d(TAG, "set characteristic notification is completed");
                     if (notifyWrapperCallback != null) {
                         if (Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                                || Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)){
+                                || Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)) {
                             notifyWrapperCallback.onNotifySuccess(bleDevice);
-                        }else if (Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)){
+                        } else if (Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)) {
                             notifyWrapperCallback.onNotifyCanceled(bleDevice);
                         }
                     }
-                }else {
-                    if (null != descWrapperCallback){
+                } else {
+                    if (null != descWrapperCallback) {
                         descWrapperCallback.onDescWriteFailed(bleDevice, status);
                     }
                 }
@@ -266,16 +265,16 @@ public final class BleRequestImpl<T extends BleDevice> {
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             super.onDescriptorRead(gatt, descriptor, status);
-            if (gatt == null || gatt.getDevice() == null)return;
+            if (gatt == null || gatt.getDevice() == null) return;
             UUID uuid = descriptor.getCharacteristic().getUuid();
             BleLog.d(TAG, "read descriptor uuid:" + uuid);
             T bleDevice = getBleDeviceInternal(gatt.getDevice().getAddress());
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (null != descWrapperCallback){
+                if (null != descWrapperCallback) {
                     descWrapperCallback.onDescReadSuccess(bleDevice, descriptor);
                 }
-            }else {
-                if (null != descWrapperCallback){
+            } else {
+                if (null != descWrapperCallback) {
                     descWrapperCallback.onDescReadFailed(bleDevice, status);
                 }
             }
@@ -283,13 +282,23 @@ public final class BleRequestImpl<T extends BleDevice> {
 
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-            BleLog.d(TAG, "read remoteRssi, rssi: "+rssi);
-            if (gatt == null || gatt.getDevice() == null)return;
-            if (null != readRssiWrapperCallback){
+            BleLog.d(TAG, "read remoteRssi, rssi: " + rssi);
+            if (gatt == null || gatt.getDevice() == null) return;
+            if (null != readRssiWrapperCallback) {
                 readRssiWrapperCallback.onReadRssiSuccess(getBleDeviceInternal(gatt.getDevice().getAddress()), rssi);
             }
         }
     };
+
+    private BleRequestImpl() {
+    }
+
+    public static <T extends BleDevice> BleRequestImpl<T> getBleRequest() {
+        if (instance == null) {
+            instance = new BleRequestImpl();
+        }
+        return instance;
+    }
 
     private int getErrorCode(T bleDevice) {
         if (bleDevice.isConnected()) {//Mcu connection is broken or the signal is weak and other reasons disconnect
@@ -307,22 +316,14 @@ public final class BleRequestImpl<T extends BleDevice> {
     }
 
     /**
-     *
      * @return 已经连接的设备集合
      */
     public List<BluetoothDevice> getConnectedDevices() {
         BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-        if (bluetoothManager != null){
+        if (bluetoothManager != null) {
             return bluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
         }
         return null;
-    }
-
-    public static <T extends BleDevice> BleRequestImpl<T> getBleRequest(){
-        if (instance == null){
-            instance = new BleRequestImpl();
-        }
-        return instance;
     }
 
     void initialize(Context context) {
@@ -349,7 +350,7 @@ public final class BleRequestImpl<T extends BleDevice> {
         BleLog.d(TAG, "BleRequestImpl is released");
     }
 
-    public void cancelTimeout(String address){
+    public void cancelTimeout(String address) {
         handler.removeCallbacksAndMessages(address);
     }
 
@@ -418,7 +419,7 @@ public final class BleRequestImpl<T extends BleDevice> {
      */
     public void disconnect(String address) {
         BluetoothGatt gatt = getBluetoothGatt(address);
-        if (gatt != null){
+        if (gatt != null) {
             gatt.disconnect();
         }
         //notifyIndex = 0;
@@ -443,12 +444,12 @@ public final class BleRequestImpl<T extends BleDevice> {
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public boolean setMtu(String address, int mtu){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mtu>20){
+    public boolean setMtu(String address, int mtu) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mtu > 20) {
             BluetoothGatt gatt = getBluetoothGatt(address);
             if (gatt != null) {
                 boolean result = gatt.requestMtu(mtu);
-                BleLog.d(TAG,"requestMTU "+mtu+" result="+result);
+                BleLog.d(TAG, "requestMTU " + mtu + " result=" + result);
                 return result;
             }
         }
@@ -494,11 +495,11 @@ public final class BleRequestImpl<T extends BleDevice> {
         boolean state = false;
         try {
             BluetoothGatt gatt = getBluetoothGatt(device.getBleAddress());
-            if (gatt != null){
+            if (gatt != null) {
                 Field field = gatt.getClass().getDeclaredField("mDeviceBusy");
                 field.setAccessible(true);
                 state = (boolean) field.get(gatt);
-                BleLog.i(TAG, "isDeviceBusy state:"+state);
+                BleLog.i(TAG, "isDeviceBusy state:" + state);
                 return state;
             }
         } catch (IllegalAccessException e) {
@@ -526,8 +527,8 @@ public final class BleRequestImpl<T extends BleDevice> {
                 BleLog.d(TAG, address + " -- write result:" + result);
                 return result;
             }
-        }else {
-            if (null != writeWrapperCallback){
+        } else {
+            if (null != writeWrapperCallback) {
                 writeWrapperCallback.onWriteFailed(getBleDeviceInternal(address), BleStates.NotInitUuid);
             }
         }
@@ -546,18 +547,18 @@ public final class BleRequestImpl<T extends BleDevice> {
         return false;
     }
 
-    public BluetoothGattCharacteristic gattCharacteristic(BluetoothGatt gatt, UUID serviceUUID, UUID characteristicUUID){
-        if (gatt == null){
+    public BluetoothGattCharacteristic gattCharacteristic(BluetoothGatt gatt, UUID serviceUUID, UUID characteristicUUID) {
+        if (gatt == null) {
             BleLog.e(TAG, "BluetoothGatt is null");
             return null;
         }
         BluetoothGattService gattService = gatt.getService(serviceUUID);
-        if (gattService == null){
+        if (gattService == null) {
             BleLog.e(TAG, "serviceUUID is null");
             return null;
         }
         BluetoothGattCharacteristic characteristic = gattService.getCharacteristic(characteristicUUID);
-        if (characteristic == null){
+        if (characteristic == null) {
             BleLog.e(TAG, "characteristicUUID is null");
             return null;
         }
@@ -578,8 +579,8 @@ public final class BleRequestImpl<T extends BleDevice> {
                 BleLog.d(TAG, "read result:" + result);
                 return result;
             }
-        }else {
-            if (null != readWrapperCallback){
+        } else {
+            if (null != readWrapperCallback) {
                 readWrapperCallback.onReadFailed(getBleDeviceInternal(address), BleStates.NotInitUuid);
             }
         }
@@ -597,24 +598,24 @@ public final class BleRequestImpl<T extends BleDevice> {
         return false;
     }
 
-    public boolean readDescriptor(String address, UUID serviceUUID, UUID characteristicUUID, UUID descriptorUUID){
+    public boolean readDescriptor(String address, UUID serviceUUID, UUID characteristicUUID, UUID descriptorUUID) {
         BluetoothGatt bluetoothGatt = getBluetoothGatt(address);
         BluetoothGattCharacteristic gattCharacteristic = gattCharacteristic(bluetoothGatt, serviceUUID, characteristicUUID);
-        if (gattCharacteristic != null){
+        if (gattCharacteristic != null) {
             BluetoothGattDescriptor descriptor = gattCharacteristic.getDescriptor(descriptorUUID);
-            if (descriptor != null){
+            if (descriptor != null) {
                 return bluetoothGatt.readDescriptor(descriptor);
             }
         }
         return false;
     }
 
-    public boolean writeDescriptor(String address, byte[] data, UUID serviceUUID, UUID characteristicUUID, UUID descriptorUUID){
+    public boolean writeDescriptor(String address, byte[] data, UUID serviceUUID, UUID characteristicUUID, UUID descriptorUUID) {
         BluetoothGatt bluetoothGatt = getBluetoothGatt(address);
         BluetoothGattCharacteristic gattCharacteristic = gattCharacteristic(bluetoothGatt, serviceUUID, characteristicUUID);
-        if (gattCharacteristic != null){
+        if (gattCharacteristic != null) {
             BluetoothGattDescriptor descriptor = gattCharacteristic.getDescriptor(descriptorUUID);
-            if (descriptor != null){
+            if (descriptor != null) {
                 descriptor.setValue(data);
                 return bluetoothGatt.writeDescriptor(descriptor);
             }
@@ -624,6 +625,7 @@ public final class BleRequestImpl<T extends BleDevice> {
 
     /**
      * 读取远程rssi
+     *
      * @param address 蓝牙地址
      * @return 是否读取rssi成功
      */
@@ -636,12 +638,12 @@ public final class BleRequestImpl<T extends BleDevice> {
     /**
      * 启用或禁用给定特征的通知
      *
-     * @param address        蓝牙地址
-     * @param enabled   是否设置通知使能
+     * @param address 蓝牙地址
+     * @param enabled 是否设置通知使能
      */
     public void setCharacteristicNotification(String address, boolean enabled) {
-        if (notifyCharacteristics.size() > 0){
-            for (BluetoothGattCharacteristic characteristic: notifyCharacteristics) {
+        if (notifyCharacteristics.size() > 0) {
+            for (BluetoothGattCharacteristic characteristic : notifyCharacteristics) {
                 setCharacteristicNotificationInternal(getBluetoothGatt(address), characteristic, enabled);
             }
         }
@@ -653,10 +655,10 @@ public final class BleRequestImpl<T extends BleDevice> {
         setCharacteristicNotificationInternal(bluetoothGatt, characteristic, enabled);
     }
 
-    private void setCharacteristicNotificationInternal(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, boolean enabled){
-        if (characteristic == null){
+    private void setCharacteristicNotificationInternal(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, boolean enabled) {
+        if (characteristic == null) {
             BleLog.e(TAG, "characteristic is null");
-            if (notifyWrapperCallback != null){
+            if (notifyWrapperCallback != null) {
                 notifyWrapperCallback.onNotifyFailed(getBleDeviceInternal(gatt.getDevice().getAddress()), BleStates.CharaUuidNull);
             }
             return;
@@ -666,19 +668,19 @@ public final class BleRequestImpl<T extends BleDevice> {
         List<BluetoothGattDescriptor> descriptors = characteristic.getDescriptors();
         if (!descriptors.isEmpty()) {
             //Filter descriptors based on the uuid of the descriptor
-            for(BluetoothGattDescriptor descriptor : descriptors){
+            for (BluetoothGattDescriptor descriptor : descriptors) {
                 if (descriptor != null) {
                     //Write the description value
-                    if((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0){
-                        descriptor.setValue(enabled?BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE:BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                    }else if((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0){
+                    if ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0) {
+                        descriptor.setValue(enabled ? BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE : BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                    } else if ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0) {
                         //两个都是通知的意思，notify和indication的区别在于，notify只是将你要发的数据发送给手机，没有确认机制，
                         //不会保证数据发送是否到达。而indication的方式在手机收到数据时会主动回一个ack回来。即有确认机制，只有收
                         //到这个ack你才能继续发送下一个数据。这保证了数据的正确到达，也起到了流控的作用。所以在打开通知的时候，需要设置一下。
-                        descriptor.setValue(enabled?BluetoothGattDescriptor.ENABLE_INDICATION_VALUE:BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                        descriptor.setValue(enabled ? BluetoothGattDescriptor.ENABLE_INDICATION_VALUE : BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                     }
                     gatt.writeDescriptor(descriptor);
-                    BleLog.d(TAG, "setCharacteristicNotificationInternal is "+enabled);
+                    BleLog.d(TAG, "setCharacteristicNotificationInternal is " + enabled);
                 }
             }
         }
@@ -691,7 +693,7 @@ public final class BleRequestImpl<T extends BleDevice> {
         List<BluetoothGattService> gattServices = gatt.getServices();
         if (gattServices == null || device == null) {
             BleLog.e(TAG, "displayGattServices gattServices or device is null");
-            if (device != null){
+            if (device != null) {
                 close(device.getAddress());
             }
             return;
@@ -733,44 +735,46 @@ public final class BleRequestImpl<T extends BleDevice> {
                     if ((gattCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0) {
                         notifyCharacteristics.add(gattCharacteristic);
                         properties_builder.append("notify,");
-                    } if((gattCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0){
+                    }
+                    if ((gattCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0) {
                         notifyCharacteristics.add(gattCharacteristic);
                         properties_builder.append("indicate,");
                     }
                     int length = properties_builder.length();
-                    if (length > 0){
-                        properties_builder.deleteCharAt(length-1);
-                        BleLog.d(TAG, properties_builder.insert(0,"characteristic properties is ").toString());
+                    if (length > 0) {
+                        properties_builder.deleteCharAt(length - 1);
+                        BleLog.d(TAG, properties_builder.insert(0, "characteristic properties is ").toString());
                     }
 
                     if (char_uuid.equals(options.uuid_write_cha.toString())) {
-                        BleLog.i(TAG,"write characteristic set up successfully:"+char_uuid);
+                        BleLog.i(TAG, "write characteristic set up successfully:" + char_uuid);
                         writeCharacteristicMap.put(device.getAddress(), gattCharacteristic);
                         //Notification feature
-                    } if (char_uuid.equals(options.uuid_read_cha.toString())) {
-                        BleLog.i(TAG,"read characteristic set up successfully:"+char_uuid);
+                    }
+                    if (char_uuid.equals(options.uuid_read_cha.toString())) {
+                        BleLog.i(TAG, "read characteristic set up successfully:" + char_uuid);
                         readCharacteristicMap.put(device.getAddress(), gattCharacteristic);
                     }
                 }
             }
         }
-        if (!service_uuid_exist){
+        if (!service_uuid_exist) {
             BleLog.e(TAG, "init error, and uuid_service not the uuid of your device");
             BleLog.e(TAG, "It is recommended to initialize in your application\n" +
                     "Ble.options()\n" +
-                            ".setUuidService(替换成自己的service_uuid)必选\n" +
-                            ".setUuidWriteCha(替换成自己的write_uuid)写入必选\n" +
-                            ".setUuidReadCha(替换成自己的read_uuid)读取必选");
+                    ".setUuidService(替换成自己的service_uuid)必选\n" +
+                    ".setUuidWriteCha(替换成自己的write_uuid)写入必选\n" +
+                    ".setUuidReadCha(替换成自己的read_uuid)读取必选");
         }
-        if (null != connectWrapperCallback){
+        if (null != connectWrapperCallback) {
             connectWrapperCallback.onReady(getBleDeviceInternal(device.getAddress()));
         }
     }
 
     //是否包含该uuid
     private boolean isContainUUID(String uuid) {
-        for (UUID u : options.uuid_services_extra){
-            if(u != null && uuid.equals(u.toString())){
+        for (UUID u : options.uuid_services_extra) {
+            if (u != null && uuid.equals(u.toString())) {
                 return true;
             }
         }
@@ -779,8 +783,9 @@ public final class BleRequestImpl<T extends BleDevice> {
 
     /**
      * 获取可写特征对象
+     *
      * @param address 蓝牙地址
-     * @return  可写特征对象
+     * @return 可写特征对象
      */
     public BluetoothGattCharacteristic getWriteCharacteristic(String address) {
         synchronized (locker) {
@@ -793,8 +798,9 @@ public final class BleRequestImpl<T extends BleDevice> {
 
     /**
      * 获取可读特征对象
+     *
      * @param address 蓝牙地址
-     * @return  可读特征对象
+     * @return 可读特征对象
      */
     public BluetoothGattCharacteristic getReadCharacteristic(String address) {
         synchronized (locker) {
@@ -815,13 +821,13 @@ public final class BleRequestImpl<T extends BleDevice> {
      */
     public List<BluetoothGattService> getSupportedGattServices(String address) {
         BluetoothGatt bluetoothGatt = getBluetoothGatt(address);
-        if (bluetoothGatt == null){
+        if (bluetoothGatt == null) {
             return null;
         }
         return bluetoothGatt.getServices();
     }
 
-    public BluetoothGatt getBluetoothGatt(String address){
+    public BluetoothGatt getBluetoothGatt(String address) {
         return gattHashMap.get(address);
     }
 

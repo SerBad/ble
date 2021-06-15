@@ -1,7 +1,8 @@
 package cn.com.heaton.blelibrary.ble.callback;
 
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+
+import androidx.annotation.RequiresApi;
 
 import cn.com.heaton.blelibrary.ble.model.ScanRecord;
 
@@ -11,19 +12,22 @@ import cn.com.heaton.blelibrary.ble.model.ScanRecord;
 
 public abstract class BleScanCallback<T> {
     /**
-     *  Start the scan
+     * Start the scan
      */
-    public void onStart(){}
+    public void onStart() {
+    }
 
     /**
-     *  Stop scanning
+     * Stop scanning
      */
-    public void onStop(){}
+    public void onStop() {
+    }
 
     /**
      * Scan to device
-     * @param device ble device object
-     * @param rssi rssi
+     *
+     * @param device     ble device object
+     * @param rssi       rssi
      * @param scanRecord Bluetooth radio package
      */
     public abstract void onLeScan(T device, int rssi, byte[] scanRecord);
@@ -33,10 +37,13 @@ public abstract class BleScanCallback<T> {
      * errorCode=2;Fails to start scan as app cannot be registered.
      * errorCode=3;Fails to start scan due an internal error
      * errorCode=4;Fails to start power optimized scan as this feature is not supported
+     *
      * @param errorCode 扫描错误码
      */
-    public void onScanFailed(int errorCode){}
+    public void onScanFailed(int errorCode) {
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void onParsedData(T device, ScanRecord scanRecord){}
+    public void onParsedData(T device, ScanRecord scanRecord) {
+    }
 }

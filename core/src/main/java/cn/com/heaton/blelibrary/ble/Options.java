@@ -10,15 +10,15 @@ package cn.com.heaton.blelibrary.ble;
 import android.bluetooth.le.ScanFilter;
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.IntRange;
-import android.support.annotation.RequiresApi;
+
+import androidx.annotation.IntRange;
+import androidx.annotation.RequiresApi;
 
 import java.util.UUID;
 
 import cn.com.heaton.blelibrary.ble.callback.wrapper.BleWrapperCallback;
 import cn.com.heaton.blelibrary.ble.model.BleDevice;
 import cn.com.heaton.blelibrary.ble.model.BleFactory;
-import cn.com.heaton.blelibrary.ble.queue.reconnect.IReconnectStrategy;
 
 /**
  * 蓝牙相关参数配置类
@@ -73,18 +73,20 @@ public class Options {
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public int manufacturerId = 65520; // 0xfff0
-
+    UUID[] uuid_services_extra = new UUID[]{};
+    UUID uuid_service = UUID.fromString("0000fee9-0000-1000-8000-00805f9b34fb");
+    UUID uuid_write_cha = UUID.fromString("d44bc439-abfd-45a2-b575-925416129600");
+    UUID uuid_read_cha = UUID.fromString("d44bc439-abfd-45a2-b575-925416129600");
+    UUID uuid_notify_cha = UUID.fromString("d44bc439-abfd-45a2-b575-925416129601");
+    UUID uuid_notify_desc = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    UUID uuid_ota_service = UUID.fromString("0000fee8-0000-1000-8000-00805f9b34fb");
+    UUID uuid_ota_notify_cha = UUID.fromString("003784cf-f7e3-55b4-6c4c-9fd140100a16");
+    UUID uuid_ota_write_cha = UUID.fromString("013784cf-f7e3-55b4-6c4c-9fd140100a16");
     /**
      * TODO 待优化(泛型)
      */
     private BleWrapperCallback bleWrapperCallback;
-
     private BleFactory factory;
-
-    public Options setScanPeriod(long scanPeriod){
-        this.scanPeriod = scanPeriod;
-        return this;
-    }
 
     public String getLogTAG() {
         return logTAG;
@@ -135,6 +137,11 @@ public class Options {
         return scanPeriod;
     }
 
+    public Options setScanPeriod(long scanPeriod) {
+        this.scanPeriod = scanPeriod;
+        return this;
+    }
+
     public int getServiceBindFailedRetryCount() {
         return serviceBindFailedRetryCount;
     }
@@ -148,7 +155,7 @@ public class Options {
         return connectFailedRetryCount;
     }
 
-    public Options setConnectFailedRetryCount(@IntRange(from = 0, to = 5)int connectFailedRetryCount) {
+    public Options setConnectFailedRetryCount(@IntRange(from = 0, to = 5) int connectFailedRetryCount) {
         this.connectFailedRetryCount = connectFailedRetryCount;
         return this;
     }
@@ -157,7 +164,7 @@ public class Options {
         return maxConnectNum;
     }
 
-    public Options setMaxConnectNum(@IntRange(from = 1, to = 7)int maxConnectNum) {
+    public Options setMaxConnectNum(@IntRange(from = 1, to = 7) int maxConnectNum) {
         this.maxConnectNum = maxConnectNum;
         return this;
     }
@@ -209,8 +216,8 @@ public class Options {
         return this;
     }
 
-    public BleFactory getFactory(){
-        if (factory == null){
+    public BleFactory getFactory() {
+        if (factory == null) {
             factory = new BleFactory() {
                 @Override
                 public BleDevice create(String address, String name) {
@@ -228,17 +235,6 @@ public class Options {
         this.factory = factory;
         return this;
     }
-
-    UUID[] uuid_services_extra = new UUID[]{};
-    UUID uuid_service = UUID.fromString("0000fee9-0000-1000-8000-00805f9b34fb");
-    UUID uuid_write_cha = UUID.fromString("d44bc439-abfd-45a2-b575-925416129600");
-    UUID uuid_read_cha = UUID.fromString("d44bc439-abfd-45a2-b575-925416129600");
-    UUID uuid_notify_cha = UUID.fromString("d44bc439-abfd-45a2-b575-925416129601");
-    UUID uuid_notify_desc = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-
-    UUID uuid_ota_service = UUID.fromString("0000fee8-0000-1000-8000-00805f9b34fb");
-    UUID uuid_ota_notify_cha = UUID.fromString("003784cf-f7e3-55b4-6c4c-9fd140100a16");
-    UUID uuid_ota_write_cha = UUID.fromString("013784cf-f7e3-55b4-6c4c-9fd140100a16");
 
     public UUID[] getUuidServicesExtra() {
         return uuid_services_extra;
@@ -321,11 +317,11 @@ public class Options {
         return this;
     }
 
-    public <T extends BleDevice> Ble<T> create(Context context){
+    public <T extends BleDevice> Ble<T> create(Context context) {
         return create(context, null);
     }
 
-    public <T extends BleDevice> Ble<T> create(Context context, Ble.InitCallback callback){
+    public <T extends BleDevice> Ble<T> create(Context context, Ble.InitCallback callback) {
         return Ble.create(context, callback);
     }
 

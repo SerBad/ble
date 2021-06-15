@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cn.com.superLei.aoparms" >
+
+    <application>
+        <!--<provider android:authorities="${applicationId}.permission.provider"
+            android:name=".AopArmsInitProvider"
+            android:multiprocess="true"
+            android:exported="false"/>-->
+        <activity
+            android:name=".common.permission.AopPermissionActivity"
+            android:theme="@style/translucent" />
+    </application>
+</manifest>

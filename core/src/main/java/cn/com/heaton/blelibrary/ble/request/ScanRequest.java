@@ -5,9 +5,9 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.os.Build;
 import android.os.Handler;
-import android.support.v4.os.HandlerCompat;
 
-import java.util.ArrayList;
+import androidx.core.os.HandlerCompat;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,19 +31,20 @@ public class ScanRequest<T extends BleDevice> implements ScanWrapperCallback {
 
     private static final String TAG = "ScanRequest";
     private static final String HANDLER_TOKEN = "stop_token";
-    private boolean scanning;
     private final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private BleScanCallback<T> bleScanCallback;
     private final Map<String, T> scanDevices = new HashMap<>();
     private final Handler handler = BleHandler.of();
     private final BleWrapperCallback<T> bleWrapperCallback = Ble.options().getBleWrapperCallback();
+    private boolean scanning;
+    private BleScanCallback<T> bleScanCallback;
 
     public void startScan(BleScanCallback<T> callback, long scanPeriod) {
-        if (callback == null) throw new IllegalArgumentException("BleScanCallback can not be null!");
+        if (callback == null)
+            throw new IllegalArgumentException("BleScanCallback can not be null!");
         bleScanCallback = callback;
         //TODO
-        if (!Utils.isPermission(Ble.getInstance().getContext(), Manifest.permission.ACCESS_COARSE_LOCATION)){
-            if (bleScanCallback != null){
+        if (!Utils.isPermission(Ble.getInstance().getContext(), Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            if (bleScanCallback != null) {
                 bleScanCallback.onScanFailed(BleStates.BlePermissionError);
             }
             return;
@@ -52,13 +53,13 @@ public class ScanRequest<T extends BleDevice> implements ScanWrapperCallback {
             return;
         }
         if (scanning) {
-            if (bleScanCallback != null){
+            if (bleScanCallback != null) {
                 bleScanCallback.onScanFailed(BleStates.ScanAlready);
             }
             return;
         }
         // Stops scanning after a pre-defined scan period.
-        if (scanPeriod >= 0){
+        if (scanPeriod >= 0) {
             HandlerCompat.postDelayed(handler, new Runnable() {
                 @Override
                 public void run() {
@@ -102,7 +103,7 @@ public class ScanRequest<T extends BleDevice> implements ScanWrapperCallback {
             bleScanCallback.onStart();
         }
 
-        if(bleWrapperCallback != null){
+        if (bleWrapperCallback != null) {
             bleWrapperCallback.onStart();
         }
     }
@@ -114,7 +115,7 @@ public class ScanRequest<T extends BleDevice> implements ScanWrapperCallback {
             bleScanCallback.onStop();
             bleScanCallback = null;
         }
-        if(bleWrapperCallback != null){
+        if (bleWrapperCallback != null) {
             bleWrapperCallback.onStop();
         }
         scanDevices.clear();
@@ -131,7 +132,7 @@ public class ScanRequest<T extends BleDevice> implements ScanWrapperCallback {
             if (bleScanCallback != null) {
                 bleScanCallback.onLeScan(bleDevice, rssi, scanRecord);
             }
-            if (bleWrapperCallback != null){
+            if (bleWrapperCallback != null) {
                 bleWrapperCallback.onLeScan(bleDevice, rssi, scanRecord);
             }
             scanDevices.put(device.getAddress(), bleDevice);
@@ -140,7 +141,7 @@ public class ScanRequest<T extends BleDevice> implements ScanWrapperCallback {
                 if (bleScanCallback != null) {
                     bleScanCallback.onLeScan(bleDevice, rssi, scanRecord);
                 }
-                if (bleWrapperCallback != null){
+                if (bleWrapperCallback != null) {
                     bleWrapperCallback.onLeScan(bleDevice, rssi, scanRecord);
                 }
             }
@@ -173,7 +174,7 @@ public class ScanRequest<T extends BleDevice> implements ScanWrapperCallback {
         return scanDevices.get(address);
     }
 
-    public void cancelScanCallback(){
+    public void cancelScanCallback() {
         bleScanCallback = null;
     }
 

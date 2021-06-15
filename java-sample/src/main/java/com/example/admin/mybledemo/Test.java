@@ -7,8 +7,10 @@ import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.admin.mybledemo.aop.CheckConnect;
 
